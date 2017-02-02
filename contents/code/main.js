@@ -73,3 +73,7 @@ var layout = function (desktop) {
     clients[i].geometry = geometry;
   }
 };
+
+registerShortcut("Tyling", "Tile current desktop", "Shift+Z", function () {
+  layout(workspace.currentDesktop);
+});
