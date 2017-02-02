@@ -50,3 +50,26 @@ WindowGroup.prototype.remove = function (client) {
 var spacing = {
   gap: 4, lr: 12, tb: 12
 };
+
+var windows = new WindowGroup();
+
+var layout = function (desktop) {
+  var clients = windows.filterByDesktop(desktop);
+
+  var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, desktop);
+
+  var width  = Math.round((screen.width - (spacing.gap*(clients.length - 1)) - (2*spacing.lr))/clients.length);
+  var height = screen.height - (2*spacing.tb);
+
+  for (var i = 0; i < clients.length; i++) {
+    var geometry = clients[i].geometry;
+
+    geometry.width = width;
+    geometry.height = height;
+
+    geometry.x = spacing.lr + (i*(width + spacing.gap)) + screen.x;
+    geometry.y = spacing.tb + screen.y;
+
+    clients[i].geometry = geometry;
+  }
+};
