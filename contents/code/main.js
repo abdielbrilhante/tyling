@@ -38,7 +38,7 @@ WindowGroup.prototype.filterByDesktop = function (desktop) {
 };
 
 WindowGroup.prototype.add = function (client) {
-  if (client.normalWindow) {
+  if (client.normalWindow && !(client.windowId in this.storage)) {
     this.storage[client.windowId] = new Window(client);
   }
 };
@@ -73,6 +73,22 @@ var layout = function (desktop) {
     clients[i].geometry = geometry;
   }
 };
+
+workspace.clientAdded.connect(function (client) {
+  windows.add(client);
+});
+
+workspace.clientRestored.connect(function (client) {
+  windows.add(client);
+});
+
+workspace.clientRemoved.connect(function (client) {
+  windows.remove(client);
+});
+
+workspace.clientMinimized.connect(function (client) {
+  windows.remove(client);
+});
 
 registerShortcut("Tyling", "Tile current desktop", "Shift+Z", function () {
   layout(workspace.currentDesktop);
