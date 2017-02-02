@@ -33,6 +33,36 @@ WindowGroup.prototype.filterByDesktop = function (desktop) {
   return f;
 };
 
+function simpleSwap(v, i, j) {
+  var temp = v[i];
+  v[i] = v[j];
+  v[j] = temp;
+}
+
+// FIXME: redundant code from filterByDesktop
+WindowGroup.prototype.swap = function (direction) {
+  var indexes = [], active;
+
+  for (var i = 0; i < this.storage.length; i++) {
+    var client = this.storage[i].client;
+
+    if ((client.desktop == workspace.currentDesktop) && !client.minimized) {
+      if (client == workspace.activeClient) active = indexes.length;
+      indexes.push(i);
+    }
+  }
+
+  if (indexes <= 1) return;
+
+  var neighbor = active + direction;
+
+  if (neighbor < 0) neighbor = indexes.length - 1;
+  if (neighbor >= indexes.length) neighbor = 0;
+
+  simpleSwap(this.storage, indexes[active], indexes[neighbor]);
+  this.layout(workspace.currentDesktop);
+};
+
 WindowGroup.prototype.layout = function (desktop) {
   var clients = this.filterByDesktop(desktop);
 
@@ -102,6 +132,10 @@ workspace.clientMinimized.connect(function (client) {
   windows.layout(client.desktop);
 });
 
-registerShortcut("Toggle Floating", "Tile current desktop", "Shift+Z", function () {
-  windows.layout(workspace.currentDesktop);
+registerShortcut("Left_swap", "Swap with window to the left", "Alt+Shift+Left", function () {
+  windows.swap(-1);
+});
+
+registerShortcut("Right_swap", "Swap with window to the left", "Alt+Shift+Right", function () {
+  windows.swap(1);
 });
