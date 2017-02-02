@@ -1,15 +1,16 @@
-var Window = function (client, column) {
+var Window = function (client) {
   this.client   = client;
   this.geometry = client.geometry;
   this.desktop  = client.desktop;
+  this.floating = false;
 };
 
 var spacing = {
-  gap: 4, lr: 12, tb: 12
+  gap: 4, lr: 16, tb: 12
 };
 
 var WindowGroup = function () {
-  this.storage = {};
+  this.storage = [];
 
   var allClients = workspace.clientList();
 
@@ -18,16 +19,11 @@ var WindowGroup = function () {
   }
 };
 
-WindowGroup.prototype.window = function (id) {
-  return this.storage[id];
-};
-
 WindowGroup.prototype.filterByDesktop = function (desktop) {
-  var keys = Object.keys(this.storage);
   var f = [];
 
-  for (var i = 0; i < keys.length; i++) {
-    var client = this.storage[keys[i]].client;
+  for (var i = 0; i < this.storage.length; i++) {
+    var client = this.storage[i].client;
 
     if (client.desktop == desktop) {
       f.push(client);
@@ -58,17 +54,25 @@ WindowGroup.prototype.layout = function (desktop) {
   }
 };
 
+function tileable(client) {
+  return !(client.skipTaskbar || client.skipSwitcher || client.skipPager  ||
+           client.transient || client.modal);
+}
+
 WindowGroup.prototype.add = function (client) {
-  if (client.normalWindow && !(client.windowId in this.storage)) {
-    this.storage[client.windowId] = new Window(client);
+  if (tileable(client)) {
+    this.storage.push(new Window(client));
     this.layout(client.desktop);
   }
 };
 
 WindowGroup.prototype.remove = function (client) {
-  if (client.windowId in this.storage) {
-    delete this.storage[client.windowId];
-    this.layout(client.desktop);
+  for (var i = 0; i < this.storage.length; i++) {
+    if (client == this.storage[i].client) {
+      this.storage.splice(i, 1);
+      this.layout(client.desktop);
+      break;
+    }
   }
 };
 
