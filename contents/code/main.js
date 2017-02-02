@@ -1,4 +1,4 @@
-var Window = function (client) {
+var Window = function (client, column) {
   this.client   = client;
   this.geometry = client.geometry;
   this.desktop  = client.desktop;
@@ -37,25 +37,8 @@ WindowGroup.prototype.filterByDesktop = function (desktop) {
   return f;
 };
 
-WindowGroup.prototype.add = function (client) {
-  if (client.normalWindow && !(client.windowId in this.storage)) {
-    this.storage[client.windowId] = new Window(client);
-  }
-};
-
-WindowGroup.prototype.remove = function (client) {
-  delete this.storage[client.windowId];
-  layout(workspace.currentDesktop);
-};
-
-var spacing = {
-  gap: 4, lr: 12, tb: 12
-};
-
-var windows = new WindowGroup();
-
-var layout = function (desktop) {
-  var clients = windows.filterByDesktop(desktop);
+WindowGroup.prototype.layout = function (desktop) {
+  var clients = this.filterByDesktop(desktop);
 
   var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, desktop);
 
@@ -75,14 +58,36 @@ var layout = function (desktop) {
   }
 };
 
+WindowGroup.prototype.add = function (client) {
+  if (client.normalWindow && !(client.windowId in this.storage)) {
+    this.storage[client.windowId] = new Window(client);
+    this.layout(client.desktop);
+  }
+};
+
+WindowGroup.prototype.remove = function (client) {
+  if (client.windowId in this.storage) {
+    delete this.storage[client.windowId];
+    this.layout(client.desktop);
+  }
+};
+
+var spacing = {
+  gap: 4, lr: 12, tb: 12
+};
+
+var windows = new WindowGroup();
+
+var layout = function (desktop) {
+
+};
+
 workspace.clientAdded.connect(function (client) {
   windows.add(client);
-  layout(workspace.currentDesktop);
 });
 
 workspace.clientRestored.connect(function (client) {
   windows.add(client);
-  layout(workspace.currentDesktop);
 });
 
 workspace.clientRemoved.connect(function (client) {
@@ -93,6 +98,6 @@ workspace.clientMinimized.connect(function (client) {
   windows.remove(client);
 });
 
-registerShortcut("Tyling", "Tile current desktop", "Shift+Z", function () {
-  layout(workspace.currentDesktop);
+registerShortcut("Toggle Floating", "Tile current desktop", "Shift+Z", function () {
+  windows.layout(workspace.currentDesktop);
 });
