@@ -25,7 +25,7 @@ WindowGroup.prototype.filterByDesktop = function (desktop) {
   for (var i = 0; i < this.storage.length; i++) {
     var client = this.storage[i].client;
 
-    if (client.desktop == desktop) {
+    if ((client.desktop == desktop) && !client.minimized) {
       f.push(client);
     }
   }
@@ -56,7 +56,7 @@ WindowGroup.prototype.layout = function (desktop) {
 
 function tileable(client) {
   return !(client.skipTaskbar || client.skipSwitcher || client.skipPager  ||
-           client.transient || client.modal);
+           client.transient || client.modal) && client.normalWindow;
 }
 
 WindowGroup.prototype.add = function (client) {
@@ -91,7 +91,7 @@ workspace.clientAdded.connect(function (client) {
 });
 
 workspace.clientRestored.connect(function (client) {
-  windows.add(client);
+  windows.layout(client.desktop);
 });
 
 workspace.clientRemoved.connect(function (client) {
@@ -99,7 +99,7 @@ workspace.clientRemoved.connect(function (client) {
 });
 
 workspace.clientMinimized.connect(function (client) {
-  windows.remove(client);
+  windows.layout(client.desktop);
 });
 
 registerShortcut("Toggle Floating", "Tile current desktop", "Shift+Z", function () {
