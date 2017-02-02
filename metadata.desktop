@@ -1,0 +1,19 @@
+[Desktop Entry]
+Name=Tyling
+Comment=Simple laptop-oriented tiling script
+Icon=preferences-system-windows-script-test
+
+Type=Service
+
+X-Plasma-API=javascript
+X-Plasma-MainScript=code/main.js
+
+X-KDE-PluginInfo-Author=Abdiel Brilhante
+X-KDE-PluginInfo-Email=abdielbrilhante@outlook.com
+X-KDE-PluginInfo-Name=tyling
+X-KDE-PluginInfo-Version=1.0
+
+X-KDE-PluginInfo-Depends=
+X-KDE-PluginInfo-License=GPL
+X-KDE-ServiceTypes=KWin/Script
+X-KDE-PluginKeyword=tyling
