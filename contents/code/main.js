@@ -45,6 +45,7 @@ WindowGroup.prototype.add = function (client) {
 
 WindowGroup.prototype.remove = function (client) {
   delete this.storage[client.windowId];
+  layout(workspace.currentDesktop);
 };
 
 var spacing = {
@@ -76,10 +77,12 @@ var layout = function (desktop) {
 
 workspace.clientAdded.connect(function (client) {
   windows.add(client);
+  layout(workspace.currentDesktop);
 });
 
 workspace.clientRestored.connect(function (client) {
   windows.add(client);
+  layout(workspace.currentDesktop);
 });
 
 workspace.clientRemoved.connect(function (client) {
