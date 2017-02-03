@@ -3,10 +3,11 @@ var Window = function (client) {
   this.geometry = client.geometry;
   this.desktop  = client.desktop;
   this.floating = false;
+  this.proportion = 1.0;
 };
 
 var spacing = {
-  gap: 4, lr: 16, tb: 12
+  gap: 2, lr: 8, tb: 8
 };
 
 var WindowGroup = function () {
@@ -23,10 +24,10 @@ WindowGroup.prototype.filterByDesktop = function (desktop) {
   var f = [];
 
   for (var i = 0; i < this.storage.length; i++) {
-    var client = this.storage[i].client;
+    var win = this.storage[i];
 
-    if ((client.desktop == desktop) && !client.minimized) {
-      f.push(client);
+    if ((win.client.desktop == desktop) && !win.client.minimized) {
+      f.push(win);
     }
   }
 
@@ -63,24 +64,43 @@ WindowGroup.prototype.swap = function (direction) {
   this.layout(workspace.currentDesktop);
 };
 
+WindowGroup.prototype.resize = function (client, offset) {
+  for (var i = 0; i < this.storage.length; i++) {
+    if (this.storage[i].client == client) {
+      this.storage[i].proportion += offset;
+      break;
+    }
+  }
+
+  this.layout(client.desktop);
+};
+
+// TODO: Add param to reset excesses
 WindowGroup.prototype.layout = function (desktop) {
   var clients = this.filterByDesktop(desktop);
 
   var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, desktop);
 
-  var width  = Math.round((screen.width - (spacing.gap*(clients.length - 1)) - (2*spacing.lr))/clients.length);
+  var weightSum = 0;
+  for (var i = 0; i < clients.length; i++) {
+    weightSum += clients[i].proportion;
+  }
+
+  var width  = (screen.width - (spacing.gap*(clients.length - 1)) - (2*spacing.lr));
   var height = screen.height - (2*spacing.tb);
 
+  var offset = spacing.lr + screen.x;
   for (var i = 0; i < clients.length; i++) {
-    var geometry = clients[i].geometry;
+    var geometry = clients[i].client.geometry;
 
-    geometry.width = width;
+    geometry.width = Math.round(width*(clients[i].proportion/weightSum));
     geometry.height = height;
 
-    geometry.x = spacing.lr + (i*(width + spacing.gap)) + screen.x;
+    geometry.x = offset;
     geometry.y = spacing.tb + screen.y;
 
-    clients[i].geometry = geometry;
+    clients[i].client.geometry = geometry;
+    offset += geometry.width + spacing.gap;
   }
 };
 
@@ -112,10 +132,6 @@ var spacing = {
 
 var windows = new WindowGroup();
 
-var layout = function (desktop) {
-
-};
-
 workspace.clientAdded.connect(function (client) {
   windows.add(client);
 });
@@ -128,14 +144,25 @@ workspace.clientRemoved.connect(function (client) {
   windows.remove(client);
 });
 
+// TODO: Shift client to the last position
 workspace.clientMinimized.connect(function (client) {
   windows.layout(client.desktop);
 });
 
+// TODO: Pass client as parameter
 registerShortcut("Left_swap", "Swap with window to the left", "Alt+Shift+Left", function () {
   windows.swap(-1);
 });
 
+// TODO: Pass client as parameter
 registerShortcut("Right_swap", "Swap with window to the left", "Alt+Shift+Right", function () {
   windows.swap(1);
+});
+
+registerShortcut("Grow_Window", "Grow window", "Alt+Shift+PgUp", function () {
+  windows.resize(workspace.activeClient, 0.2);
+});
+
+registerShortcut("Shrink_Window", "Shrink window", "Alt+Shift+PgDown", function () {
+  windows.resize(workspace.activeClient, 0.2);
 });
