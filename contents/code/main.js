@@ -136,7 +136,7 @@ workspace.clientAdded.connect(function (client) {
   windows.add(client);
 });
 
-workspace.clientRestored.connect(function (client) {
+workspace.clientUnminimized.connect(function (client) {
   windows.layout(client.desktop);
 });
 
@@ -164,5 +164,5 @@ registerShortcut("Grow_Window", "Grow window", "Alt+Shift+PgUp", function () {
 });
 
 registerShortcut("Shrink_Window", "Shrink window", "Alt+Shift+PgDown", function () {
-  windows.resize(workspace.activeClient, 0.2);
+  windows.resize(workspace.activeClient, -0.2);
 });
