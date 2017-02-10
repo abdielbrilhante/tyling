@@ -126,10 +126,6 @@ WindowGroup.prototype.remove = function (client) {
   }
 };
 
-var spacing = {
-  gap: 4, lr: 12, tb: 12
-};
-
 var windows = new WindowGroup();
 
 workspace.clientAdded.connect(function (client) {
@@ -149,6 +145,10 @@ workspace.clientMinimized.connect(function (client) {
   windows.layout(client.desktop);
 });
 
+registerShortcut("Reset_layout", "Reset layout for all desktops", "Shift+Z", function () {
+  windows.layout(workspace.currentDesktop);
+});
+
 // TODO: Pass client as parameter
 registerShortcut("Left_swap", "Swap with window to the left", "Alt+Shift+Left", function () {
   windows.swap(-1);
@@ -166,3 +166,11 @@ registerShortcut("Grow_Window", "Grow window", "Alt+Shift+PgUp", function () {
 registerShortcut("Shrink_Window", "Shrink window", "Alt+Shift+PgDown", function () {
   windows.resize(workspace.activeClient, -0.2);
 });
+
+/*
+
+Group by desktop
+Tabbing mode
+Floating mode
+
+*/
