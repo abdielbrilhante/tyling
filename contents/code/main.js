@@ -145,6 +145,12 @@ workspace.clientMinimized.connect(function (client) {
   windows.layout(client.desktop);
 });
 
+workspace.currentDesktopChanged.connect(function (desktop, client) {
+  for (var i = 1; i <= workspace.desktops; i++) {
+    windows.layout(i);
+  }
+});
+
 registerShortcut("Reset_layout", "Reset layout for all desktops", "Shift+Z", function () {
   windows.layout(workspace.currentDesktop);
 });
