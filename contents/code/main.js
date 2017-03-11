@@ -22,7 +22,7 @@ function tileable(client) {
 }
 
 var WindowGroup = function (desktop) {
-  this.floating = false;
+  this.tiling = true;
   this.storage = [];
   this.desktop = desktop;
 
@@ -85,10 +85,12 @@ WindowGroup.prototype.resize = function (client, offset) {
 };
 
 // TODO: Add param to reset excesses
-WindowGroup.prototype.layout = function (desktop) {
+WindowGroup.prototype.layout = function () {
+  if (!this.tiling) { return }
+
   var clients = this.filter();
 
-  var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, desktop);
+  var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, workspace.currentDesktop);
 
   var weightSum = 0;
   for (var i = 0; i < clients.length; i++) {
@@ -128,6 +130,11 @@ WindowGroup.prototype.remove = function (client) {
       break;
     }
   }
+};
+
+WindowGroup.prototype.toggleTiling = function () {
+  this.tiling = !this.tiling;
+  this.layout();
 };
 
 var windows = {};
@@ -186,6 +193,10 @@ registerShortcut("Grow_Window", "Grow window", "Alt+Shift+PgUp", function () {
 
 registerShortcut("Shrink_Window", "Shrink window", "Alt+Shift+PgDown", function () {
   windows[workspace.currentDesktop].resize(workspace.activeClient, -0.2);
+});
+
+registerShortcut("Toggle_Tiling", "Toggle active desktop tiling", "Meta+T", function () {
+  windows[workspace.currentDesktop].toggleTiling();
 });
 
 /*
