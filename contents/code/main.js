@@ -144,7 +144,9 @@ for (var i = 1; i <= workspace.desktops; i++) {
 }
 
 workspace.clientAdded.connect(function (client) {
-  windows[client.desktop].add(client);
+  if (client.desktop > 0) {
+    windows[client.desktop].add(client);
+  }
 });
 
 workspace.clientUnminimized.connect(function (client) {
@@ -152,7 +154,9 @@ workspace.clientUnminimized.connect(function (client) {
 });
 
 workspace.clientRemoved.connect(function (client) {
-  windows[client.desktop].remove(client);
+  if (client.desktop > 0) {
+    windows[client.desktop].add(client);
+  }
 });
 
 // TODO: Shift client to the last position
