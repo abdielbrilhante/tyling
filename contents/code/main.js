@@ -10,35 +10,44 @@ var spacing = {
   gap: 2, lr: 8, tb: 8
 };
 
-var WindowGroup = function () {
+function simpleSwap(v, i, j) {
+  var temp = v[i];
+  v[i] = v[j];
+  v[j] = temp;
+}
+
+function tileable(client) {
+  return !(client.skipTaskbar || client.skipSwitcher || client.skipPager  ||
+           client.transient || client.modal) && client.normalWindow;
+}
+
+var WindowGroup = function (desktop) {
+  this.floating = false;
   this.storage = [];
+  this.desktop = desktop;
 
   var allClients = workspace.clientList();
 
   for (var i = 0; i < allClients.length; i++) {
-    this.add(allClients[i]);
+    if (allClients[i].desktop == this.desktop) {
+      this.add(allClients[i]);
+    }
   }
 };
 
-WindowGroup.prototype.filterByDesktop = function (desktop) {
+WindowGroup.prototype.filter = function () {
   var f = [];
 
   for (var i = 0; i < this.storage.length; i++) {
     var win = this.storage[i];
 
-    if ((win.client.desktop == desktop) && !win.client.minimized) {
+    if (!win.client.minimized) {
       f.push(win);
     }
   }
 
   return f;
 };
-
-function simpleSwap(v, i, j) {
-  var temp = v[i];
-  v[i] = v[j];
-  v[j] = temp;
-}
 
 // FIXME: redundant code from filterByDesktop
 WindowGroup.prototype.swap = function (direction) {
@@ -47,7 +56,7 @@ WindowGroup.prototype.swap = function (direction) {
   for (var i = 0; i < this.storage.length; i++) {
     var client = this.storage[i].client;
 
-    if ((client.desktop == workspace.currentDesktop) && !client.minimized) {
+    if (!client.minimized) {
       if (client == workspace.activeClient) active = indexes.length;
       indexes.push(i);
     }
@@ -61,7 +70,7 @@ WindowGroup.prototype.swap = function (direction) {
   if (neighbor >= indexes.length) neighbor = 0;
 
   simpleSwap(this.storage, indexes[active], indexes[neighbor]);
-  this.layout(workspace.currentDesktop);
+  this.layout();
 };
 
 WindowGroup.prototype.resize = function (client, offset) {
@@ -72,12 +81,12 @@ WindowGroup.prototype.resize = function (client, offset) {
     }
   }
 
-  this.layout(client.desktop);
+  this.layout();
 };
 
 // TODO: Add param to reset excesses
 WindowGroup.prototype.layout = function (desktop) {
-  var clients = this.filterByDesktop(desktop);
+  var clients = this.filter();
 
   var screen = workspace.clientArea(workspace.WorkArea, workspace.activeScreen, desktop);
 
@@ -104,15 +113,10 @@ WindowGroup.prototype.layout = function (desktop) {
   }
 };
 
-function tileable(client) {
-  return !(client.skipTaskbar || client.skipSwitcher || client.skipPager  ||
-           client.transient || client.modal) && client.normalWindow;
-}
-
 WindowGroup.prototype.add = function (client) {
   if (tileable(client)) {
     this.storage.push(new Window(client));
-    this.layout(client.desktop);
+    this.layout();
   }
 };
 
@@ -120,57 +124,68 @@ WindowGroup.prototype.remove = function (client) {
   for (var i = 0; i < this.storage.length; i++) {
     if (client == this.storage[i].client) {
       this.storage.splice(i, 1);
-      this.layout(client.desktop);
+      this.layout();
       break;
     }
   }
 };
 
-var windows = new WindowGroup();
+var windows = {};
+
+for (var i = 1; i <= workspace.desktops; i++) {
+  windows[i] = new WindowGroup(i)
+}
 
 workspace.clientAdded.connect(function (client) {
-  windows.add(client);
+  windows[client.desktop].add(client);
 });
 
 workspace.clientUnminimized.connect(function (client) {
-  windows.layout(client.desktop);
+  windows[client.desktop].layout();
 });
 
 workspace.clientRemoved.connect(function (client) {
-  windows.remove(client);
+  windows[client.desktop].remove(client);
 });
 
 // TODO: Shift client to the last position
 workspace.clientMinimized.connect(function (client) {
-  windows.layout(client.desktop);
+  windows[client.desktop].layout();
+});
+
+workspace.desktopPresenceChanged.connect(function (client, desktop) {
+  if (desktop > 0) {
+    windows[desktop].remove(client);
+    windows[client.desktop].add(client);
+  }
 });
 
 workspace.currentDesktopChanged.connect(function (desktop, client) {
   for (var i = 1; i <= workspace.desktops; i++) {
-    windows.layout(i);
+    windows[i].layout();
   }
 });
 
 registerShortcut("Reset_layout", "Reset layout for all desktops", "Shift+Z", function () {
-  windows.layout(workspace.currentDesktop);
+  windows[workspace.currentDesktop].layout();
 });
 
 // TODO: Pass client as parameter
 registerShortcut("Left_swap", "Swap with window to the left", "Alt+Shift+Left", function () {
-  windows.swap(-1);
+  windows[workspace.currentDesktop].swap(-1);
 });
 
 // TODO: Pass client as parameter
 registerShortcut("Right_swap", "Swap with window to the left", "Alt+Shift+Right", function () {
-  windows.swap(1);
+  windows[workspace.currentDesktop].swap(1);
 });
 
 registerShortcut("Grow_Window", "Grow window", "Alt+Shift+PgUp", function () {
-  windows.resize(workspace.activeClient, 0.2);
+  windows[workspace.currentDesktop].resize(workspace.activeClient, 0.2);
 });
 
 registerShortcut("Shrink_Window", "Shrink window", "Alt+Shift+PgDown", function () {
-  windows.resize(workspace.activeClient, -0.2);
+  windows[workspace.currentDesktop].resize(workspace.activeClient, -0.2);
 });
 
 /*
